@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JD JOB & Travel Helper</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+            scroll-behavior: smooth;
+        }
+        .section-header {
+            position: relative;
+            padding-bottom: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        .section-header:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border-radius: 2px;
+        }
+        .card {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .loader {
+            border-top-color: #4f46e5;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .result-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .api-key-container {
+            background: linear-gradient(90deg, #f3f4f6, #e5e7eb);
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .floating-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 40;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .login-container {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-form {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Login Screen (initially shown) -->
+    <div id="login-screen" class="login-container">
+        <div class="login-form p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-center text-indigo-600 mb-6">JD JOB & Travel Helper</h2>
+            <div id="login-form-container">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">ইমেইল</label>
+                    <input type="email" id="login-email" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার ইমেইল ঠিকানা">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">পাসওয়ার্ড</label>
+                    <input type="password" id="login-password" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার পাসওয়ার্ড">
+                </div>
+                <button id="login-btn" class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors duration-300">
+                    লগইন করুন
+                </button>
+                <p class="text-center mt-4 text-gray-600">
+                    একাউন্ট নেই? <button id="show-register" class="text-indigo-600 hover:underline">রেজিস্টার করুন</button>
+                </p>
+            </div>
+            <div id="register-form" class="hidden">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">পূর্ণ নাম</label>
+                    <input type="text" id="register-name" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার পূর্ণ নাম">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">ইমেইল</label>
+                    <input type="email" id="register-email" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার ইমেইল ঠিকানা">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">পাসওয়ার্ড</label>
+                    <input type="password" id="register-password" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড">
+                </div>
+                <button id="register-btn" class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors duration-300">
+                    রেজিস্টার করুন
+                </button>
+                <p class="text-center mt-4 text-gray-600">
+                    ইতিমধ্যে একাউন্ট আছে? <button id="show-login" class="text-indigo-600 hover:underline">লগইন করুন</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application (initially hidden) -->
+    <div id="main-app" class="hidden">
+        <!-- Navigation Bar -->
+        <nav class="bg-white shadow-md sticky top-0 z-50">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <a href="#" class="text-2xl font-bold text-indigo-600 flex items-center">
+                    <i class="fas fa-briefcase mr-2"></i> JD JOB & Travel Helper
+                </a>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex space-x-6">
+                    <a href="#cv-builder" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300 font-medium">CV & Cover Letter</a>
+                    <a href="#job-portals" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300 font-medium">Job Portals</a>
+                    <a href="#embassies" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300 font-medium">Embassy & Immigration</a>
+                    <a href="#flight-tickets" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300 font-medium">Flight Tickets</a>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <span id="user-name" class="text-gray-700 hidden md:block"></span>
+                    <button id="logout-btn" class="bg-indigo-100 text-indigo-600 px-4 py-2 rounded-lg text-sm hover:bg-indigo-200 transition-colors duration-300">
+                        <i class="fas fa-sign-out-alt mr-1"></i> লগআউট
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-button" class="md:hidden text-gray-600 hover:text-indigo-600 focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile Menu Dropdown -->
+            <div id="mobile-menu" class="hidden md:hidden bg-white shadow-inner pb-4">
+                <a href="#cv-builder" class="block py-3 px-6 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 font-medium">
+                    <i class="fas fa-file-alt mr-2"></i> CV & Cover Letter
+                </a>
+                <a href="#job-portals" class="block py-3 px-6 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 font-medium">
+                    <i class="fas fa-globe mr-2"></i> Job Portals
+                </a>
+                <a href="#embassies" class="block py-3 px-6 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 font-medium">
+                    <i class="fas fa-landmark mr-2"></i> Embassy & Immigration
+                </a>
+                <a href="#flight-tickets" class="block py-3 px-6 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 font-medium">
+                    <i class="fas fa-plane mr-2"></i> Flight Tickets
+                </a>
+            </div>
+        </nav>
+
+        <main class="container mx-auto px-4 py-8">
+            <!-- Hero Section -->
+            <section class="text-center py-12 mb-8 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl shadow-lg">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">আপনার ক্যারিয়ার ও ভ্রমণ সহকারী</h1>
+                <p class="text-xl max-w-3xl mx-auto mb-8">পেশাদার সিভি তৈরি করুন, चাকরি খুঁজুন, ভিসা তথ্য পান এবং সাশ্রয়ী মূল্যে ফ্লাইট বুক করুন</p>
+                <a href="#cv-builder" class="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-300 inline-flex items-center">
+                    শুরু করুন <i class="fas fa-arrow-down ml-2"></i>
+                </a>
+            </section>
+
+            <!-- API Key Section -->
+            <section class="api-key-container p-6 rounded-xl mb-12">
+                <h2 class="text-2xl font-bold mb-4 text-center">DeepSeek API সেটআপ</h2>
+                <p class="text-gray-600 mb-4 text-center">সিভি ও কভার লেটার জেনারেট করতে DeepSeek API কী প্রয়োজন</p>
+                <div class="max-w-2xl mx-auto">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <input type="password" id="api-key-input" placeholder="আপনার DeepSeek API কী লিখুন" class="flex-grow p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button id="save-api-key" class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors duration-300">সেভ করুন</button>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2 text-center">আপনার API কী শুধুমাত্র আপনার ব্রাউজারে সংরক্ষণ করা হবে</p>
+                </div>
+            </section>
+
+            <!-- CV & Cover Letter Section -->
+            <section id="cv-builder" class="my-12">
+                <h2 class="text-3xl font-bold text-center text-indigo-600 section-header">CV & Cover Letter Builder</h2>
+                
+                <div class="max-w-4xl mx-auto">
+                    <!-- Tabs -->
+                    <div class="flex border-b mb-6">
+                        <button class="tab-button py-2 px-6 rounded-t-lg active" data-tab="input-tab">ইনপুট</button>
+                        <button class="tab-button py-2 px-6 rounded-t-lg" data-tab="cv-result-tab">সিভি ফলাফল</button>
+                        <button class="tab-button py-2 px-6 rounded-t-lg" data-tab="cover-letter-result-tab">কভার লেটার ফলাফল</button>
+                    </div>
+                    
+                    <!-- Input Tab -->
+                    <div id="input-tab" class="tab-content bg-white p-6 rounded-lg shadow-md">
+                        <p class="text-center text-gray-600 mb-6">
+                            আপনার তথ্য এখানে লিখুন, এবং আমরা আপনার জন্য একটি পেশাদার সিভি এবং কভার লেটার তৈরি করব।
+                        </p>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 mb-2">পূর্ণ নাম</label>
+                            <input type="text" id="full-name" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার পূর্ণ নাম">
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 mb-2">ইমেইল</label>
+                            <input type="email" id="email" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার ইমেইল ঠিকানা">
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 mb-2">শিক্ষাগত যোগ্যতা</label>
+                            <textarea id="education" class="w-full h-32 p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার শিক্ষাগত যোগ্যতা লিখুন..."></textarea>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 mb-2">কাজের অভিজ্ঞতা</label>
+                            <textarea id="experience" class="w-full h-32 p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার কাজের অভিজ্ঞতা লিখুন..."></textarea>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-gray-700 mb-2">দক্ষতা</label>
+                            <textarea id="skills" class="w-full h-24 p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="আপনার দক্ষতা লিখুন (কমা দ্বারা আলাদা করুন)..."></textarea>
+                        </div>
+                        
+                        <div class="flex justify-center mt-6">
+                            <button id="generate-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors duration-300 flex items-center">
+                                <i class="fas fa-magic mr-2"></i> AI দিয়ে তৈরি করুন
+                            </button>
+                        </div>
+                        
+                        <div id="loading" class="hidden mt-6 text-center">
+                            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mx-auto"></div>
+                            <p class="text-gray-600 mt-2">আপনার সিভি ও কভার লেটার তৈরি করা হচ্ছে...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- CV Result Tab -->
+                    <div id="cv-result-tab" class="tab-content result-container bg-white p-6 rounded-lg shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold">আপনার জেনারেট করা সিভি</h3>
+                            <button id="download-cv" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors duration-300">
+                                <i class="fas fa-download mr-1"></i> ডাউনলোড
+                            </button>
+                        </div>
+                        <div id="cv-output" class="p-4 border rounded-lg bg-gray-50 min-h-[400px]"></div>
+                    </div>
+                    
+                    <!-- Cover Letter Result Tab -->
+                    <div id="cover-letter-result-tab" class="tab-content result-container bg-white p-6 rounded-lg shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold">আপনার জেনারেট করা কভার লেটার</h3>
+                            <button id="download-cover" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors duration-300">
+                                <i class="fas fa-download mr-1"></i> ডাউনলোড
+                            </button>
+                        </div>
+                        <div id="cover-letter-output" class="p-4 border rounded-lg bg-gray-50 min-h-[400px]"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Job Portals Section -->
+            <section id="job-portals" class="my-12">
+                <h2 class="text-3xl font-bold text-center text-indigo-600 section-header">বিশ্বের ৩০টি উন্নত দেশের জব পোর্টাল</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Job Portal Cards -->
+                    <a href="https://www.linkedin.com/jobs/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                                    <i class="fab fa-linkedin text-blue-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">LinkedIn</h3>
+                            </div>
+                            <p class="text-gray-600">বিশ্বের বৃহত্তম পেশাদার নেটওয়ার্ক এবং জব পোর্টাল।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.indeed.com/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-indigo-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-search text-indigo-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">Indeed</h3>
+                            </div>
+                            <p class="text-gray-600">বিশ্বের অন্যতম বৃহত্তম জব সার্চ ইঞ্জিন।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.glassdoor.com/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-green-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-building text-green-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">Glassdoor</h3>
+                            </div>
+                            <p class="text-gray-600">চাকরির তালিকা, কোম্পানি রিভিউ এবং বেতন সম্পর্কিত তথ্য।</p>
+                        </div>
+                    </a>
+                    
+                    <!-- Additional job portals would go here -->
+                    <a href="https://www.eures.europa.eu/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-yellow-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-flag text-yellow-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">EURES (Europe)</h3>
+                            </div>
+                            <p class="text-gray-600">ইউরোপীয় ইকোনমিক এরিয়ার (EEA) মধ্যে চাকরি খোঁজার প্ল্যাটফর্ম।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.stepstone.de/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-red-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-globe-europe text-red-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">StepStone (Germany)</h3>
+                            </div>
+                            <p class="text-gray-600">জার্মানির একটি প্রধান জব বোর্ড।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.usajobs.gov/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-university text-blue-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">USAJOBS (USA)</h3>
+                            </div>
+                            <p class="text-gray-600">মার্কিন যুক্তরাষ্ট্রের ফেডারেল সরকারি চাকরির সাইট।</p>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="text-center mt-8">
+                    <button id="load-more-jobs" class="bg-indigo-100 text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-200 transition-colors duration-300">
+                        আরও জব পোর্টাল দেখুন
+                    </button>
+                </div>
+            </section>
+
+            <!-- Embassy & Immigration Section -->
+            <section id="embassies" class="my-12">
+                <h2 class="text-3xl font-bold text-center text-indigo-600 section-header">গুরুত্বপূর্ণ দূতাবাস ও ইমিগ্রেশন অফিসের লিংক</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Embassy Cards -->
+                    <a href="https://www.uscis.gov/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-passport text-blue-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">USA Immigration</h3>
+                            </div>
+                            <p class="text-gray-600">U.S. Citizenship and Immigration Services (USCIS) এর অফিসিয়াল সাইট।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.canada.ca/en/immigration-refugees-citizenship.html" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-red-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-maple-leaf text-red-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">Canada Immigration</h3>
+                            </div>
+                            <p class="text-gray-600">Immigration, Refugees and Citizenship Canada (IRCC) এর অফিসিয়াল সাইট।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://home-affairs.ec.europa.eu/policies/migration-and-asylum_en" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-yellow-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-star text-yellow-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">EU Immigration Portal</h3>
+                            </div>
+                            <p class="text-gray-600">ইউরোপীয় ইউনিয়ন এর ইমিগ্রেশন পোর্টাল।</p>
+                        </div>
+                    </a>
+                    
+                    <!-- Additional embassy links would go here -->
+                    <a href="https://www.homeaffairs.gov.au/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-green-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-koala text-green-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">Australia Immigration</h3>
+                            </div>
+                            <p class="text-gray-600">Department of Home Affairs, অস্ট্রেলিয়া।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.gov.uk/browse/visas-immigration" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-red-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-landmark text-red-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">UK Visa & Immigration</h3>
+                            </div>
+                            <p class="text-gray-600">যুক্তরাজ্যের ভিসا ও ইমিগ্রেশন সম্পর্কিত তথ্য।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.nzimmigration.govt.nz/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-kiwi-bird text-blue-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">New Zealand Immigration</h3>
+                            </div>
+                            <p class="text-gray-600">নিউজিল্যান্ড ইমিগ্রেশনের অফিসিয়াল ওয়েবসাইট।</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Flight Tickets Section -->
+            <section id="flight-tickets" class="my-12">
+                <h2 class="text-3xl font-bold text-center text-indigo-600 section-header">অনলাইন এয়ারলাইন্স টিকিট পোর্টাল</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Flight Portal Cards -->
+                    <a href="https://biman-airlines.com/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-green-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-plane text-green-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">Biman Bangladesh Airlines</h3>
+                            </div>
+                            <p class="text-gray-600">বাংলাদেশের জাতীয় বিমান সংস্থা।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://us-banglaairlines.com/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-plane-departure text-blue-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">US-Bangla Airlines</h3>
+                            </div>
+                            <p class="text-gray-600">বাংলাদেশের অন্যতম বেসরকারি বিমান সংস্থা।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://sharetrip.net/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-ticket-alt text-purple-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">ShareTrip</h3>
+                            </div>
+                            <p class="text-gray-600">বাংলাদেশ ভিত্তিক জনপ্রিয় অনলাইন ট্রাভেল এজেন্সি।</p>
+                        </div>
+                    </a>
+                    
+                    <!-- Additional flight portals would go here -->
+                    <a href="https://gozayaan.com/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-indigo-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-suitcase text-indigo-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">Gozayaan</h3>
+                            </div>
+                            <p class="text-gray-600">বাংলাদেশ ভিত্তিক অনলাইন ট্রাভেল প্ল্যাটফর্ম।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.makemytrip.com/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-orange-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-globe-asia text-orange-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">MakeMyTrip</h3>
+                            </div>
+                            <p class="text-gray-600">ভারতের সবচেয়ে বড় অনলাইন ট্রাভেল কোম্পানি।</p>
+                        </div>
+                    </a>
+                    
+                    <a href="https://www.expedia.com/" target="_blank" class="card block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-teal-100 p-3 rounded-lg mr-4">
+                                    <i class="fas fa-hotel text-teal-600 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800">Expedia</h3>
+                            </div>
+                            <p class="text-gray-600">বিশ্বব্যাপী হোটেল, ফ্লাইট এবং প্যাকেজ বুকিং প্ল্যাটফর্ম।</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <!-- Floating Action Button -->
+        <button id="scroll-to-top" class="floating-button bg-indigo-600 text-white w-14 h-14 rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors duration-300">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-8">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-6 md:mb-0">
+                        <h3 class="text-2xl font-bold mb-2">JD JOB & Travel Helper</h3>
+                        <p class="text-gray-400">আপনার ক্যারিয়ার ও ভ্রমণ সহকারী</p>
+                    </div>
+                    
+                    <div class="text-center md:text-right">
+                        <p class="text-gray-400 mb-2">Powered by</p>
+                        <div class="flex items-center justify-center md:justify-end space-x-4">
+                            <span class="font-semibold">DEEPSEEK</span>
+                            <span class="font-semibold">&</span>
+                            <span class="font-semibold">JD</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                    <p>&copy; 2024 Job & Travel Assistant. All Rights Reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // ==================== BACKEND SIMULATION ====================
+        // This simulates a backend with user authentication and data storage
+        
+        // Database simulation using localStorage
+        const Database = {
+            // Users table
+            users: JSON.parse(localStorage.getItem('users')) || [],
+            
+            // CV data table
+            cvData: JSON.parse(localStorage.getItem('cvData')) || [],
+            
+            // Save data to localStorage
+            save: function() {
+                localStorage.setItem('users', JSON.stringify(this.users));
+                localStorage.setItem('cvData', JSON.stringify(this.cvData));
+            },
+            
+            // Find user by email
+            findUserByEmail: function(email) {
+                return this.users.find(user => user.email === email);
+            },
+            
+            // Add new user
+            addUser: function(userData) {
+                this.users.push(userData);
+                this.save();
+                return userData;
+            },
+            
+            // Add CV data
+            addCVData: function(cvData) {
+                this.cvData.push(cvData);
+                this.save();
+                return cvData;
+            },
+            
+            // Get CV data for user
+            getCVDataByUser: function(userId) {
+                return this.cvData.filter(data => data.userId === userId);
+            }
+        };
+        
+        // Authentication service
+        const AuthService = {
+            currentUser: null,
+            
+            // Register new user
+            register: function(name, email, password) {
+                // Check if user already exists
+                if (Database.findUserByEmail(email)) {
+                    throw new Error('এই ইমেইল দিয়ে ইতিমধ্যে একটি একাউন্ট রয়েছে');
+                }
+                
+                // Create new user
+                const newUser = {
+                    id: Date.now().toString(),
+                    name,
+                    email,
+                    password, // In a real app, this should be hashed
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Add to database
+                return Database.addUser(newUser);
+            },
+            
+            // Login user
+            login: function(email, password) {
+                const user = Database.findUserByEmail(email);
+                
+                if (!user || user.password !== password) {
+                    throw new Error('ইমেইল বা পাসওয়ার্ড ভুল');
+                }
+                
+                this.currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                return user;
+            },
+            
+            // Logout user
+            logout: function() {
+                this.currentUser = null;
+                localStorage.removeItem('currentUser');
+            },
+            
+            // Check if user is logged in
+            isLoggedIn: function() {
+                const user = localStorage.getItem('currentUser');
+                if (user) {
+                    this.currentUser = JSON.parse(user);
+                    return true;
+                }
+                return false;
+            }
+        };
+        
+        // CV Service
+        const CVService = {
+            // Generate CV using DeepSeek API
+            generateCV: async function(userData, apiKey) {
+                // Show loading
+                document.getElementById('loading').classList.remove('hidden');
+                
+                try {
+                    // In a real implementation, you would call the DeepSeek API here
+                    // This is a mock implementation for demonstration
+                    
+                    // Simulate API call delay
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // Generate mock CV and Cover Letter
+                    const cvContent = `
+                        <h2 class="text-2xl font-bold mb-4">${userData.fullName}</h2>
+                        <p class="text-gray-600 mb-2"><i class="fas fa-envelope mr-2"></i>${userData.email}</p>
+                        <div class="mb-4">
+                            <h3 class="text-xl font-semibold mb-2 border-b pb-1">শিক্ষাগত যোগ্যতা</h3>
+                            <p>${userData.education}</p>
+                        </div>
+                        <div class="mb-4">
+                            <h3 class="text-xl font-semibold mb-2 border-b pb-1">কাজের অভিজ্ঞতা</h3>
+                            <p>${userData.experience}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2 border-b pb-1">দক্ষতা</h3>
+                            <p>${userData.skills}</p>
+                        </div>
+                    `;
+                    
+                    const coverLetterContent = `
+                        <h2 class="text-2xl font-bold mb-4">প্রিয় Hiring Manager,</h2>
+                        <p class="mb-4">${userData.fullName} হিসাবে, আমার শিক্ষাগত যোগ্যতা (${userData.education}) এবং কাজের অভিজ্ঞতা (${userData.experience}) আপনার প্রতিষ্ঠানের জন্য মূল্যবান অবদান রাখতে সক্ষম।</p>
+                        <p class="mb-4">আমার দক্ষতার মধ্যে রয়েছে: ${userData.skills}। আমি বিশ্বাস করি যে এই দক্ষতাগুলো আপনার দলের সাথে ভালভাবে খাপ খাইয়ে নিতে সক্ষম হবে।</p>
+                        <p>আমি এই পদে যোগদানের জন্য আগ্রহী এবং একটি সাক্ষাত্কারের জন্য অপেক্ষায় থাকব।</p>
+                        <p class="mt-8">সাধুবাদ সহ,<br>${userData.fullName}</p>
+                    `;
+                    
+                    // Save CV data to database
+                    if (AuthService.currentUser) {
+                        Database.addCVData({
+                            userId: AuthService.currentUser.id,
+                            cvData: userData,
+                            cvContent,
+                            coverLetterContent,
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                    
+                    return { cvContent, coverLetterContent };
+                    
+                } catch (error) {
+                    console.error('Error generating CV:', error);
+                    throw new Error('সিভি জেনারেট করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।');
+                } finally {
+                    // Hide loading
+                    document.getElementById('loading').classList.add('hidden');
+                }
+            },
+            
+            // Download CV as PDF (mock implementation)
+            downloadCV: function() {
+                alert('সিভি ডাউনলোড করা হচ্ছে... (ডেমো)');
+                // In a real implementation, this would generate a PDF
+            },
+            
+            // Download Cover Letter as PDF (mock implementation)
+            downloadCoverLetter: function() {
+                alert('কভার লেটার ডাউনলোড করা হচ্ছে... (ডেমো)');
+                // In a real implementation, this would generate a PDF
+            }
+        };
+
+        // ==================== FRONTEND LOGIC ====================
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const mainApp = document.getElementById('main-app');
+        const loginFormContainer = document.getElementById('login-form-container');
+        const registerForm = document.getElementById('register-form');
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const registerName = document.getElementById('register-name');
+        const registerEmail = document.getElementById('register-email');
+        const registerPassword = document.getElementById('register-password');
+        const showRegisterBtn = document.getElementById('show-register');
+        const showLoginBtn = document.getElementById('show-login');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userName = document.getElementById('user-name');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const saveApiKeyBtn = document.getElementById('save-api-key');
+        const generateBtn = document.getElementById('generate-btn');
+        const downloadCvBtn = document.getElementById('download-cv');
+        const downloadCoverBtn = document.getElementById('download-cover');
+        const cvOutput = document.getElementById('cv-output');
+        const coverLetterOutput = document.getElementById('cover-letter-output');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const scrollToTopBtn = document.getElementById('scroll-to-top');
+        const loadMoreJobsBtn = document.getElementById('load-more-jobs');
+
+        // Initialize the application
+        function initApp() {
+            // Check if user is logged in
+            if (AuthService.isLoggedIn()) {
+                showMainApp();
+            } else {
+                showLoginScreen();
+            }
+            
+            // Load saved API key if exists
+            const savedApiKey = localStorage.getItem('deepseek-api-key');
+            if (savedApiKey) {
+                apiKeyInput.value = savedApiKey;
+            }
+            
+            // Set up event listeners
+            setupEventListeners();
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            loginScreen.classList.remove('hidden');
+            mainApp.classList.add('hidden');
+        }
+
+        // Show main application
+        function showMainApp() {
+            loginScreen.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+            userName.textContent = AuthService.currentUser.name;
+        }
+
+        // Set up all event listeners
+        function setupEventListeners() {
+            // Login/Register form toggling
+            showRegisterBtn.addEventListener('click', () => {
+                loginFormContainer.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+            });
+            
+            showLoginBtn.addEventListener('click', () => {
+                registerForm.classList.add('hidden');
+                loginFormContainer.classList.remove('hidden');
+            });
+            
+            // Login functionality
+            loginBtn.addEventListener('click', handleLogin);
+            
+            // Register functionality
+            registerBtn.addEventListener('click', handleRegister);
+            
+            // Logout functionality
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Mobile menu toggle
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // Save API Key
+            saveApiKeyBtn.addEventListener('click', () => {
+                const apiKey = apiKeyInput.value;
+                if (apiKey) {
+                    localStorage.setItem('deepseek-api-key', apiKey);
+                    alert('API কী সফলভাবে সংরক্ষণ করা হয়েছে!');
+                } else {
+                    alert('দয়া করে একটি বৈধ API কী লিখুন।');
+                }
+            });
+            
+            // Generate CV and Cover Letter
+            generateBtn.addEventListener('click', handleGenerateCV);
+            
+            // Download buttons
+            downloadCvBtn.addEventListener('click', CVService.downloadCV);
+            downloadCoverBtn.addEventListener('click', CVService.downloadCoverLetter);
+            
+            // Tab functionality
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.getAttribute('data-tab');
+                    
+                    // Update active button
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // Show selected tab content
+                    tabContents.forEach(content => {
+                        if (content.id === tabId) {
+                            content.style.display = 'block';
+                            setTimeout(() => {
+                                content.style.opacity = 1;
+                            }, 10);
+                        } else {
+                            content.style.opacity = 0;
+                            setTimeout(() => {
+                                content.style.display = 'none';
+                            }, 300);
+                        }
+                    });
+                });
+            });
+            
+            // Scroll to top button
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    scrollToTopBtn.style.display = 'flex';
+                } else {
+                    scrollToTopBtn.style.display = 'none';
+                }
+            });
+            
+            scrollToTopBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+            
+            // Load more jobs
+            loadMoreJobsBtn.addEventListener('click', () => {
+                alert('আরও জব পোর্টাল লোড করা হচ্ছে... (ডেমো)');
+            });
+        }
+
+        // Handle login
+        function handleLogin() {
+            const email = loginEmail.value;
+            const password = loginPassword.value;
+            
+            if (!email || !password) {
+                alert('দয়া করে ইমেইল এবং পাসওয়ার্ড লিখুন');
+                return;
+            }
+            
+            try {
+                AuthService.login(email, password);
+                showMainApp();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Handle register
+        function handleRegister() {
+            const name = registerName.value;
+            const email = registerEmail.value;
+            const password = registerPassword.value;
+            
+            if (!name || !email || !password) {
+                alert('দয়া করে সমস্ত তথ্য লিখুন');
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে');
+                return;
+            }
+            
+            try {
+                AuthService.register(name, email, password);
+                alert('নতুন একাউন্ট সফলভাবে তৈরি হয়েছে! দয়া করে লগইন করুন।');
+                registerForm.classList.add('hidden');
+                loginFormContainer.classList.remove('hidden');
+                // Pre-fill login form
+                loginEmail.value = email;
+                loginPassword.value = '';
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            AuthService.logout();
+            showLoginScreen();
+        }
+
+        // Handle CV generation
+        async function handleGenerateCV() {
+            const apiKey = localStorage.getItem('deepseek-api-key');
+            if (!apiKey) {
+                alert('দয়া করে প্রথমে আপনার DeepSeek API কী সেট করুন।');
+                return;
+            }
+
+            // Get form values
+            const fullName = document.getElementById('full-name').value;
+            const email = document.getElementById('email').value;
+            const education = document.getElementById('education').value;
+            const experience = document.getElementById('experience').value;
+            const skills = document.getElementById('skills').value;
+
+            if (!fullName || !education || !experience || !skills) {
+                alert('দয়া করে সমস্ত প্রয়োজনীয় তথ্য প্রদান করুন।');
+                return;
+            }
+
+            try {
+                const userData = { fullName, email, education, experience, skills };
+                const result = await CVService.generateCV(userData, apiKey);
+                
+                // Display results
+                cvOutput.innerHTML = result.cvContent;
+                coverLetterOutput.innerHTML = result.coverLetterContent;
+                
+                // Show result tabs
+                document.querySelectorAll('.result-container').forEach(container => {
+                    container.style.display = 'block';
+                    setTimeout(() => {
+                        container.style.opacity = 1;
+                    }, 10);
+                });
+                
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
